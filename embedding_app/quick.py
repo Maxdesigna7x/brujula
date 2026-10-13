@@ -54,6 +54,9 @@ class QuickWindow(Adw.ApplicationWindow):
         self.types=Gtk.DropDown.new_from_strings(['Todos los archivos','Documentos','Imágenes','Videos','Audio'])
         self.types.connect('notify::selected',lambda *_:self.submit_if_query());controls.append(self.types)
         self.spinner=Gtk.Spinner();controls.append(self.spinner);root.append(controls)
+        self.setup_box=Gtk.Box(spacing=8);self.setup_box.set_margin_start(18);self.setup_box.set_margin_end(18)
+        self.setup_label=label('Preparación inicial de IA',True);self.setup_label.set_hexpand(True);self.setup_box.append(self.setup_label)
+        self.setup_box.append(button('Preparar IA',lambda _:(app.show_manager(),app.manager.prepare_ai())));self.setup_box.set_visible(False);root.append(self.setup_box)
         self.attachment=Gtk.Box(spacing=8);self.attachment.add_css_class('quick-attachment');self.attachment.set_margin_start(18);self.attachment.set_margin_end(18)
         self.attachment.set_halign(Gtk.Align.START)
         self.attachment_image=Gtk.Picture();self.attachment_image.set_content_fit(Gtk.ContentFit.CONTAIN);self.attachment_image.set_can_shrink(True);self.attachment_image.set_size_request(112,84);self.attachment_image.set_visible(False);self.attachment.append(self.attachment_image)
@@ -98,6 +101,10 @@ class QuickWindow(Adw.ApplicationWindow):
     def received(self,data):
         self.poll_pending=False;self.snapshot=data
         self.index_progress.update(data)
+        self.setup_box.set_visible(not data.get('runtime_ready',True) or not data['model_ready'])
+        setup=data.get('setup',{});message=setup.get('message','Prepara el motor y descarga el modelo por separado')
+        if setup.get('phase')=='model':message+=f" · {human(data['model_bytes'])} recibidos"
+        self.setup_label.set_text(message)
         theme=data['settings']['theme'];Adw.StyleManager.get_default().set_color_scheme({'system':Adw.ColorScheme.DEFAULT,'dark':Adw.ColorScheme.FORCE_DARK,'light':Adw.ColorScheme.FORCE_LIGHT}.get(theme,Adw.ColorScheme.DEFAULT))
         items=[('Todas las ubicaciones',{})]
         items += [(l['name']+(' · no incluida' if not l['enabled'] else '')+(' · desconectado' if not l['online'] else ''),{'locations':[l['id']]}) for l in data['locations']]

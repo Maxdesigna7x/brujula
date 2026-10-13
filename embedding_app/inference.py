@@ -1,8 +1,8 @@
 """Dedicated model process. JSON lines on stdin/stdout, diagnostics on stderr."""
 import base64, hashlib, json, os, subprocess, sys, threading, time
 from pathlib import Path
-ROOT=Path(__file__).resolve().parents[1]
-MODEL=ROOT/'models/embeddinggemma-2'
+from .paths import ROOT, model_directory, engine_python
+MODEL=model_directory()
 
 def ready():
     return (MODEL/'model.safetensors').is_file() and (MODEL/'tokenizer.model').is_file() and (MODEL/'tokenizer.json').is_file()
@@ -25,11 +25,12 @@ class Encoder:
                 self.process=None
     def encode(self,items,settings,query=False):
         with self.lock:
+            if not engine_python():raise RuntimeError('Prepara el motor de IA desde Configuración → Preparar IA.')
             if not ready():raise RuntimeError('El modelo sigue descargándose; la búsqueda por nombre ya funciona.')
             options=(settings['device'],settings['dimensions'])
             if self.process and (self.process.poll() is not None or options!=self.options):self.close()
             if not self.process:
-                self.process=subprocess.Popen([sys.executable,'-m','embedding_app.inference','worker'],cwd=ROOT,stdin=subprocess.PIPE,stdout=subprocess.PIPE,text=True,bufsize=1)
+                self.process=subprocess.Popen([str(engine_python()),'-m','embedding_app.inference','worker'],cwd=ROOT,stdin=subprocess.PIPE,stdout=subprocess.PIPE,text=True,bufsize=1)
                 self.options=options
             request={'items':items,'query':query,'device':settings['device'],'dim':settings['dimensions']}
             self.process.stdin.write(json.dumps(request)+'\n');self.process.stdin.flush()

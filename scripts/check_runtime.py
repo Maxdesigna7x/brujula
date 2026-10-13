@@ -1,5 +1,5 @@
 import importlib, importlib.metadata, sys
-names={'torch':'torch','transformers':'transformers','sentence-transformers':'sentence_transformers','pypdf':'pypdf','python-docx':'docx','Pillow':'PIL','soundfile':'soundfile'}
+names={'torchvision':'torchvision','torch':'torch','transformers':'transformers','sentence-transformers':'sentence_transformers','pypdf':'pypdf','python-docx':'docx','Pillow':'PIL','soundfile':'soundfile'}
 errors=[]
 for package,module in names.items():
     try:

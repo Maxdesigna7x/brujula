@@ -1,0 +1,31 @@
+name: Build Debian package
+on:
+  workflow_dispatch:
+  push:
+    branches: [main]
+    tags: ['v*']
+  pull_request:
+permissions:
+  contents: read
+jobs:
+  package:
+    runs-on: ubuntu-24.04
+    steps:
+      - uses: actions/checkout@v7.0.1
+      - name: Native test tools
+        run: sudo apt-get update && sudo apt-get install -y python3-venv ffmpeg poppler-utils desktop-file-utils
+      - name: Lightweight regression tests (no model download)
+        run: |
+          python3 -m venv .venv
+          .venv/bin/pip install numpy Pillow pypdf python-docx
+          .venv/bin/python -m unittest discover -s tests -v
+      - name: Build and verify
+        run: |
+          python3 scripts/build_deb.py
+          desktop-file-validate packaging/brujula.desktop
+          dpkg-deb --info dist/*.deb
+          (cd dist && sha256sum -c *.sha256)
+      - uses: actions/upload-artifact@v7.0.2
+        with:
+          name: brujula-deb
+          path: dist/*

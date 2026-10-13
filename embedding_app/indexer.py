@@ -2,6 +2,7 @@ import hashlib, json, os, tempfile, threading, time, uuid, stat
 from pathlib import Path
 from .readers import kind, SENSITIVE, text_samples, extract_media
 from .inference import ready, fingerprint
+from .paths import engine_python
 from .volumes import refresh_locations
 from .metadata import birth_time
 from .resources import ResourceGate
@@ -69,7 +70,7 @@ class Indexer:
         self.state.update(running=True,phase='Leyendo metadatos',stage='scan',done=0,total=0,errors=0,scanned=0,part_done=0,part_total=0,current='',location='')
         try:
             s=self.store.settings();recipe=self.recipe(s);self.scan(s)
-            if not ready():
+            if not ready() or not engine_python():
                 self.state.update(phase='Extrayendo texto sin modelo',stage='metadata')
                 with self.store.connect() as c:
                     texts=[dict(r) for r in c.execute("SELECT f.* FROM files f JOIN locations l ON f.location_id=l.id WHERE f.kind='text' AND f.excerpt='' AND l.online=1 AND l.enabled=1")]

@@ -86,7 +86,7 @@ class CoreTests(unittest.TestCase):
         def write(name,text):
             p=self.docs/name;p.write_text(text);os.utime(p,(time.time()-20,time.time()-20))
         write('one.txt','Linux');write('two.txt','Chocolate')
-        with patch('embedding_app.indexer.ready',return_value=True):
+        with patch('embedding_app.indexer.ready',return_value=True),patch('embedding_app.indexer.engine_python',return_value=Path('/mock/python')):
             indexer.run();initial=encoder.count;self.assertEqual(initial,4)
             indexer.run();self.assertEqual(encoder.count,initial)
             write('three.txt','Montañas');indexer.run();self.assertEqual(encoder.count,initial+2)

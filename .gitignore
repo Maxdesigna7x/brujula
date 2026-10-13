@@ -12,3 +12,5 @@ __pycache__/
 *.key
 .cache/
 .DS_Store
+dist/
+*.deb

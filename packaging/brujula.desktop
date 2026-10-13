@@ -1,0 +1,10 @@
+[Desktop Entry]
+Type=Application
+Name=Brújula
+Comment=Busca archivos por significado, imagen y audio
+Exec=brujula
+Icon=brujula
+Terminal=false
+Categories=Utility;FileTools;
+StartupNotify=true
+StartupWMClass=local.brujula.search

@@ -31,7 +31,20 @@ Las capturas muestran la aplicación real con el índice pausado y sin ubicacion
 - Muestreo acotado de videos y documentos largos, en lugar de analizar todo exhaustivamente.
 - Procesamiento local; las consultas y los archivos indexados no se envían a una API.
 
-## Instalación
+## Instalación como aplicación (.deb)
+
+La release **v0.2.0** incluye `brujula_0.2.0_all.deb` y su SHA-256. Instala con:
+
+```bash
+sudo apt install ./brujula_0.2.0_all.deb
+brujula
+```
+
+El paquete instala el código, icono y lanzador. **El modelo y el motor de IA se preparan por separado**, desde el botón **Preparar IA** de la primera apertura; puedes elegir CPU o NVIDIA/CUDA. No hay descargas en scripts de dpkg ni datos personales en el paquete.
+
+La aplicación sigue siendo editable desde el repositorio. [Instalación, datos, construcción y desarrollo](docs/PAQUETE_DEB.md).
+
+## Instalación desde código
 
 Necesitas Linux, Python 3.12 o posterior para el motor, GTK 4/libadwaita con PyGObject en el Python del sistema, y `uv`. CUDA es opcional; también puedes elegir CPU.
 
@@ -93,7 +106,7 @@ Desmarcar una carpeta o disco lo excluye del análisis y la búsqueda, conservan
 
 ## Alcance actual
 
-Esta es una **primera versión experimental**, no una aplicación empaquetada para todas las distribuciones.
+Esta es una **primera versión experimental**. El .deb está orientado a Zorin OS 18 / Ubuntu 24.04; no se ha probado en todas las distribuciones.
 
 - Un adjunto multimedia por consulta: una segunda imagen o audio sustituye al primero. Texto más adjunto combina sus embeddings; no garantiza que se cumplan ambas condiciones exactamente.
 - Ctrl+V acepta una imagen como contenido del portapapeles; copiar un archivo desde el administrador de archivos puede usar otro formato todavía no soportado.
@@ -113,7 +126,7 @@ Esta es una **primera versión experimental**, no una aplicación empaquetada pa
 
 Las dos últimas órdenes requieren el modelo descargado y ejecutan inferencia real con contenido sintético. Los informes se escriben en `work/`, excluido de Git.
 
-Se verificaron **22 pruebas** del índice, filtros, discos, consultas multimedia y control de recursos, además de comprobaciones GTK bajo Xvfb. Las mediciones iniciales en una RTX 3060 mostraron aproximadamente 0,55–1,58 GB de memoria GPU asignada por PyTorch y 2,38–2,79 GB de RAM residente del proceso de inferencia. Son pruebas pequeñas, no una garantía de rendimiento sobre una biblioteca real.
+Se verificaron **24 pruebas** del índice, filtros, discos, consultas multimedia y control de recursos, además de comprobaciones GTK bajo Xvfb. El .deb se probó mediante instalación aislada y un motor CPU limpio; la instalación global necesita tu contraseña de administrador. Las mediciones iniciales en una RTX 3060 mostraron aproximadamente 0,55–1,58 GB de memoria GPU asignada por PyTorch y 2,38–2,79 GB de RAM residente del proceso de inferencia. Son pruebas pequeñas, no una garantía de rendimiento sobre una biblioteca real.
 
 ## Documentación
 

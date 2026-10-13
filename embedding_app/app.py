@@ -7,7 +7,7 @@ import gi
 gi.require_version('Gtk','4.0');gi.require_version('Adw','1')
 from gi.repository import Gtk, Adw, GLib, Gio, Gdk, Pango
 from .progress import IndexProgress
-ROOT=Path(__file__).resolve().parents[1]
+from .paths import ROOT, DATA, engine_python
 KIND={'':'Todos los tipos','text':'Documentos','image':'Imágenes','video':'Videos','audio':'Audio','other':'Otros'}
 def human(n):
     for unit in ['B','KB','MB','GB','TB']:
@@ -26,9 +26,9 @@ def button(text,callback,icon=None):
 
 class Client:
     def __init__(self):
-        logs=Path.home()/'.local/share/brujula';logs.mkdir(parents=True,exist_ok=True)
+        logs=DATA;logs.mkdir(parents=True,exist_ok=True)
         self.log=(logs/'backend.log').open('a')
-        self.p=subprocess.Popen([str(ROOT/'.venv/bin/python'),'-m','embedding_app.backend','--rpc'],cwd=ROOT,stdin=subprocess.PIPE,stdout=subprocess.PIPE,stderr=self.log,text=True,bufsize=1)
+        self.p=subprocess.Popen([str(engine_python() or '/usr/bin/python3'),'-m','embedding_app.backend','--rpc'],cwd=ROOT,stdin=subprocess.PIPE,stdout=subprocess.PIPE,stderr=self.log,text=True,bufsize=1)
         self.lock=threading.Lock()
     def call(self,op,**kw):
         with self.lock:
@@ -59,6 +59,7 @@ class Window(Adw.ApplicationWindow):
         self.set_default_size(1120,760);self.owns_client=client is None;self.client=client or Client();self.snapshot={};self.scope=None;self.scope_volume=None;self.generation=0;self.scope_signature=None;self.poll_pending=False
         outer=Gtk.Box(orientation=Gtk.Orientation.VERTICAL)
         header=Adw.HeaderBar();header.pack_start(button('Añadir carpeta',lambda _:self.add_folder(), 'folder-new-symbolic'))
+        header.pack_end(button('Preparar IA',lambda _:self.prepare_ai(),'folder-download-symbolic'))
         header.pack_end(button('Configuración',lambda _:self.settings(), 'emblem-system-symbolic'))
         header.pack_start(button('Buscador rápido',lambda _:app.do_activate(),'system-search-symbolic'))
         header.pack_end(button('Salir de Brújula',lambda _:app.quit(),'application-exit-symbolic'))
@@ -113,6 +114,8 @@ class Window(Adw.ApplicationWindow):
         pause=' · Pausado' if data['paused'] else ''
         self.status_label.set_text(f"{state['phase']}{pause} · {state['done']}/{state['total']} · {data['files']} archivos · {model}")
         self.status_label.set_tooltip_text(state['phase'] + ('\n' + state['current'] if state.get('current') else ''))
+        setup=data.get('setup',{})
+        if setup.get('phase') in ('runtime','model','verify'):self.status_label.set_text(setup['message'])
         self.pause_btn.set_label('Continuar' if data['paused'] else 'Pausar')
         signature=json.dumps([data['locations'],data['zones'],data['volumes']],sort_keys=True)
         if signature!=self.scope_signature:self.scope_signature=signature;self.rebuild_sidebar()
@@ -248,6 +251,15 @@ class Window(Adw.ApplicationWindow):
             line=Gtk.Box(spacing=8);l=label(loc['path']);l.set_hexpand(True);line.append(l)
             line.append(button('Quitar',lambda _,loc=loc:self.client.async_call('remove_location',lambda _: (win.close(),self.poll()) and False,self.error,id=loc['id'])));box.append(line)
         for z in self.snapshot.get('zones',[]):box.append(button('Quitar zona '+z['name'],lambda _,z=z:self.client.async_call('remove_zone',lambda _: (win.close(),self.poll()) and False,self.error,id=z['id'])))
+        box.append(button('Cerrar',lambda _:win.close()));win.present()
+    def prepare_ai(self):
+        win,box=self.dialog('Preparar búsqueda con IA')
+        box.append(label('El instalador no incluye el modelo. Esta preparación descarga el motor y los pesos en tu carpeta de usuario; no requiere permisos de administrador.'))
+        mode=Gtk.DropDown.new_from_strings(['CPU · descarga menor','GPU NVIDIA · CUDA, descarga mayor']);box.append(mode)
+        box.append(label('Puedes seguir usando el índice por nombre mientras se prepara. Una descarga interrumpida se puede reintentar. Al terminar, sal de Brújula y vuelve a abrirla para cargar el nuevo entorno.',True))
+        info=self.snapshot.get('setup',{});box.append(label(info.get('message','')))
+        box.append(button('Preparar y descargar',lambda _:self.client.async_call('prepare_ai',lambda _: (win.close(),self.poll()) and False,self.error,mode=['cpu','cuda'][mode.get_selected()])))
+        box.append(button('Cancelar preparación',lambda _:self.command('cancel_setup')))
         box.append(button('Cerrar',lambda _:win.close()));win.present()
     def settings(self):
         s=self.snapshot.get('settings',{});win,box=self.dialog('Configuración')

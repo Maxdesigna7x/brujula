@@ -1,0 +1,17 @@
+#!/bin/sh
+set -eu
+BRUJULA_ROOT="${BRUJULA_APP_ROOT:-/usr/share/brujula}"
+export GIO_USE_VFS=local
+export PYTHONDONTWRITEBYTECODE=1
+cd "$BRUJULA_ROOT"
+engine() {
+    /usr/bin/python3 -c 'from embedding_app.paths import engine_python; print(engine_python() or "/usr/bin/python3")'
+}
+case "${1:-}" in
+    --version) /usr/bin/python3 -c 'from embedding_app import __version__; print("Brújula "+__version__)'; exit 0 ;;
+    --prepare-ai) shift; exec /usr/bin/python3 -m embedding_app.setup_ai --mode "${1:-cpu}" ;;
+    --download-model) shift; exec "$(engine)" -m embedding_app.setup_ai --download-only ;;
+    --cli) shift; exec "$(engine)" -m embedding_app.backend "$@" ;;
+    --check-runtime) shift; exec "$(engine)" scripts/check_runtime.py ;;
+esac
+exec /usr/bin/python3 -m embedding_app.app "$@"

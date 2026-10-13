@@ -1,0 +1,13 @@
+# torch is installed separately from its CPU/CUDA index during first-run setup.
+transformers==5.19.0
+sentence-transformers==6.1.0
+numpy>=2,<3
+scipy>=1.14
+scikit-learn>=1.5
+pypdf>=6,<7
+python-docx>=1.2,<2
+Pillow>=11,<14
+soundfile>=0.13,<1
+huggingface-hub>=1.31,<2
+tokenizers==0.23.3
+safetensors==0.8.0

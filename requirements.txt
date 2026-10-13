@@ -11,3 +11,4 @@ soundfile>=0.13
 huggingface-hub>=1.31,<2.0
 tokenizers==0.23.3
 safetensors==0.8.0
+torchvision>=0.27

@@ -1,20 +1,22 @@
-import argparse, json, os, sys, threading, time, fcntl, tempfile, subprocess
+import argparse, json, os, sys, threading, time, fcntl, tempfile, subprocess, signal
 from pathlib import Path
 from .storage import Store
 from .volumes import volumes, add_location, refresh_locations, set_disk, disk_states
 from .inference import Encoder, ready, MODEL
 from .indexer import Indexer
 from .search import search
+from .paths import ROOT, DATA, engine_python, setup_state
+from .setup_ai import state as write_setup_state
 
 class Backend:
     def __init__(self,store=None):
         self.store=store or Store();self.encoder=Encoder();self.indexer=Indexer(self.store,self.encoder);self.end=threading.Event()
-        self.last_scan=time.monotonic();self.was_ready=ready()
+        self.setup_process=None;self.last_scan=time.monotonic();self.was_ready=ready() and bool(engine_python())
         self.scheduler=threading.Thread(target=self.maintenance,daemon=True);self.scheduler.start()
     def maintenance(self):
         while not self.end.wait(5):
             settings=self.store.settings();self.encoder.idle(settings['idle_seconds'])
-            model_ready=ready();new_model=model_ready and not self.was_ready;self.was_ready=model_ready
+            model_ready=ready() and bool(engine_python());new_model=model_ready and not self.was_ready;self.was_ready=model_ready
             if not self.indexer.state['running'] and not self.indexer.pause.is_set() and (new_model or time.monotonic()-self.last_scan>int(settings['scan_minutes'])*60):
                 self.last_scan=time.monotonic();self.indexer.start()
     def dispatch(self,op,**p):
@@ -23,7 +25,22 @@ class Backend:
                 counts={r['status']:r['n'] for r in c.execute('SELECT status,count(*) n FROM files GROUP BY status')}
                 total=c.execute('SELECT count(*),coalesce(sum(size),0) FROM files').fetchone()
                 events=[dict(r) for r in c.execute('SELECT time,message FROM events ORDER BY id DESC LIMIT 20')]
-            return {'index':dict(self.indexer.state),'gpu':self.indexer.gate.last,'paused':self.indexer.pause.is_set(),'model_ready':ready(),'model_bytes':(MODEL/'model.safetensors').stat().st_size if ready() else sum(x.stat().st_size for x in MODEL.glob('.cache/huggingface/download/*.incomplete')),'locations':self.store.locations(),'zones':self.store.zones(),'volumes':disk_states(self.store),'counts':counts,'files':total[0],'bytes':total[1],'settings':self.store.settings(),'events':events}
+            return {'index':dict(self.indexer.state),'gpu':self.indexer.gate.last,'paused':self.indexer.pause.is_set(),'model_ready':ready(),'model_bytes':(MODEL/'model.safetensors').stat().st_size if ready() else sum(x.stat().st_size for x in MODEL.glob('.cache/huggingface/download/*.incomplete')),'locations':self.store.locations(),'zones':self.store.zones(),'volumes':disk_states(self.store),'counts':counts,'files':total[0],'bytes':total[1],'settings':self.store.settings(),'events':events,'runtime_ready':bool(engine_python()),'setup':setup_state()}
+        if op=='prepare_ai':
+            mode=p.get('mode','cpu')
+            if mode not in ('cpu','cuda'):raise ValueError('Selecciona CPU o CUDA.')
+            if self.setup_process and self.setup_process.poll() is None:return True
+            DATA.mkdir(parents=True,exist_ok=True)
+            log=(DATA/'setup.log').open('a')
+            write_setup_state('runtime','Iniciando preparación de IA')
+            self.setup_process=subprocess.Popen(['/usr/bin/python3','-m','embedding_app.setup_ai','--mode',mode],cwd=ROOT,stdout=log,stderr=log,start_new_session=True)
+            log.close();return True
+        if op=='cancel_setup':
+            if self.setup_process and self.setup_process.poll() is None:
+                os.killpg(self.setup_process.pid,signal.SIGTERM)
+                self.setup_process.wait(timeout=10)
+                write_setup_state('cancelled','Preparación cancelada; puedes reintentar sin borrar archivos.')
+            return True
         if op=='add_location':
             self.stop_index_for_change()
             lid=add_location(self.store,p['path'],p.get('name'));self.indexer.start();return {'id':lid}
@@ -94,6 +111,7 @@ class Backend:
             if self.indexer.thread.is_alive():raise ValueError('El análisis actual está terminando. Vuelve a intentarlo en unos segundos.')
     def close(self):
         self.end.set();self.indexer.stop.set();self.indexer.pause.clear()
+        if self.setup_process and self.setup_process.poll() is None:self.dispatch('cancel_setup')
         # Closing encoder waits for the current inference, then actually returns memory.
         self.encoder.close()
 

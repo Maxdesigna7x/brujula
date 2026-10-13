@@ -1,0 +1,14 @@
+Package: brujula
+Version: @VERSION@
+Section: utils
+Priority: optional
+Architecture: all
+Maintainer: Brújula contributors <noreply@github.com>
+Depends: python3 (>= 3.12), python3-gi, gir1.2-gtk-4.0 (>= 4.8), gir1.2-adw-1 (>= 1.2), python3-numpy, python3-pil, python3-pypdf, python3-docx, python3-venv, python3-pip, ffmpeg, poppler-utils, libsndfile1
+Recommends: pipewire-bin
+Homepage: https://github.com/Maxdesigna7x/brujula
+Description: Local semantic file search with a native GTK interface
+ Search indexed files by text, image or audio, organize locations and disks,
+ and process changes incrementally. Python sources remain editable.
+ The AI runtime and EmbeddingGemma 2 weights are downloaded separately,
+ on demand, to the user's data directory. No downloads run during dpkg.

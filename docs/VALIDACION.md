@@ -24,7 +24,7 @@ La verificación se ejecuta con archivos sintéticos y un directorio de datos te
 - Inferencia de imagen y audio comprobada con muestras sintéticas.
 - Indexación de cinco archivos: dos textos, imagen, audio y video con fotogramas/audio. Todos en estado ready.
 - Búsqueda de Ubuntu devuelve primero el manual de Linux.
-- Veintidós pruebas de regresión del índice y filtros, incluyendo escaneo incompleto y ausencia de bonificación acumulada por múltiples segmentos.
+- Veinticuatro pruebas de regresión del índice y filtros, incluyendo escaneo incompleto y ausencia de bonificación acumulada por múltiples segmentos.
 - Nuevos archivos y modificaciones: solo se regeneran los embeddings afectados; los archivos sin cambios no vuelven a pasar por el encoder.
 - Guardia de GPU: espera con alta utilización o memoria insuficiente, contabiliza pesos propios, reanuda al quedar libre y permite cancelar; modo CPU omite la condición.
 - GTK: arranque, resultados, detalles, configuración, zonas, gestión de ubicaciones y actividad ejercitados bajo Xvfb.
@@ -48,3 +48,15 @@ El plan completo incluía extensiones GNOME/Nautilus, perfiles por ubicación, O
 ## Discos y carpetas
 
 Se verificaron estados ninguno/parcial/completo, exclusión sin borrado, reconexión y conservación de IDs al pasar de carpetas a disco completo o al añadir una subcarpeta después. El nuevo selector integrado abrió y navegó a la carpeta de ejemplos y se canceló correctamente, sin añadir automáticamente ubicaciones personales.
+
+## Release .deb 0.2.0
+
+- Paquete construido con dpkg-deb, propietarios root y lanzador validado con desktop-file-validate. No incluye modelos, venv, índices ni cachés personales.
+- Instalación/actualización de la aplicación mediante dpkg en una raíz temporal sin privilegios. Las dependencias se marcaron como forzadas porque esa raíz tiene una base dpkg vacía; se utilizaron las librerías nativas del host. **No se pudo instalar globalmente con sudo sin la contraseña del usuario.**
+- Runtime nuevo Python 3.12, PyTorch 2.12.0+cpu y torchvision 0.27.0+cpu, preparado mediante el lanzador del paquete; dependencias resueltas desde cero.
+- Descarga independiente del modelo reutilizando los archivos ya descargados, con acceso a Hugging Face y SHA-256 completo correcto; sin volver a transferir 1,49 GB.
+- Inferencia CPU real de texto, imagen y audio; cinco archivos sintéticos (incluido video con sonido) indexados sin errores. La búsqueda de Linux coloca primero el manual; la búsqueda por imagen devuelve primero la imagen correspondiente.
+- Interfaz del código instalado probada bajo Xvfb tanto antes de preparar IA como después: muestra/oculta correctamente el asistente y abre la configuración.
+- Veinticuatro pruebas de regresión, incluyendo rutas de instalación y runtime externo. GitHub Actions construye el .deb sin descargar un modelo.
+
+Informes locales en work/deb-runtime-validation.json, work/deb-setup-final.log y work/deb-gui-*.log. CUDA usa el runtime de desarrollo ya probado en el equipo; no se descargó un segundo runtime CUDA limpio para esta release.

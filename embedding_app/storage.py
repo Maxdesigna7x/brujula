@@ -1,5 +1,6 @@
 import json, os, sqlite3, time
 from pathlib import Path
+from .paths import DATA
 
 DEFAULTS = {'profile':'Ligero','device':'auto','dimensions':256,'video_frames':12,'audio_windows':4,'audio_seconds':20,'text_words':3000,'enable_audio':True,'gpu_idle_only':True,'gpu_check_seconds':60,'gpu_max_utilization':15,'gpu_min_free_mb':2500,'scan_minutes':15,'idle_seconds':120,'theme':'system','exclude':['node_modules','.git','.venv','venv','__pycache__','models','work','.cache'], 'types':['text','image','video','audio','other']}
 
@@ -12,7 +13,7 @@ class Connection(sqlite3.Connection):
 
 class Store:
     def __init__(self, directory=None):
-        self.directory = Path(directory or os.environ.get('BRUJULA_DATA', Path.home()/'.local/share/brujula'))
+        self.directory = Path(directory) if directory else DATA
         self.directory.mkdir(parents=True, exist_ok=True)
         self.path = self.directory/'index.sqlite3'
         with self.connect() as c:
