@@ -1,0 +1,13 @@
+# GTK/PyGObject comes from Zorin's /usr/bin/python3, not pip.
+# torch is reused from this machine's existing Python through system-site-packages.
+torch>=2.12
+transformers==5.19.0
+sentence-transformers==6.1.0
+numpy>=2
+pypdf>=6
+python-docx>=1.2
+Pillow>=11
+soundfile>=0.13
+huggingface-hub>=1.31,<2.0
+tokenizers==0.23.3
+safetensors==0.8.0

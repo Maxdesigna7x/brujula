@@ -1,0 +1,3 @@
+Guía de instalación de Linux
+
+Para instalar Linux en una computadora se prepara una memoria USB de arranque, se revisa el espacio disponible y se inicia el instalador. Después se configura el idioma, la cuenta de usuario y las actualizaciones. Zorin OS ofrece un escritorio familiar para organizar documentos, descargar aplicaciones y navegar por internet.
