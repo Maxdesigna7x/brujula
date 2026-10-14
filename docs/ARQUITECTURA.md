@@ -2,7 +2,7 @@
 
 ## Procesos
 
-`run.sh` → GTK/libadwaita (`app.py`, Python del sistema) → JSON por stdin/stdout → `backend.py` (venv) → proceso `inference.py` (PyTorch/Sentence Transformers).
+`run.sh` → GTK/libadwaita (`app.py`, Python del sistema) → JSON por stdin/stdout → `backend.py` (runtime seleccionado o Python del sistema) → proceso `inference.py` (PyTorch/Sentence Transformers).
 
 No hay servidor HTTP ni puerto de red local. La interfaz envía operaciones en hilos para no bloquear GTK. El backend mantiene un hilo de indexación y un planificador de revisiones. El acceso al encoder se serializa: no se cargan dos modelos completos al mismo tiempo. El proceso del modelo usa terminación vinculada al padre en Linux para evitar modelos huérfanos.
 
@@ -12,6 +12,8 @@ SQLite usa WAL, conexiones por operación y cierre explícito. Un bloqueo `flock
 
 | Archivo | Función |
 |---|---|
+| `paths.py` | Resolución de código, datos, modelo y runtime |
+| `setup_ai.py` | Preparación por usuario, descarga, SHA-256 y estado |
 | `storage.py` | Esquema SQLite, configuración, zonas, registro |
 | `volumes.py` | lsblk, UUID, asociación carpeta/volumen, cambio de montaje |
 | `metadata.py` | statx para fecha de creación, desconocida si no disponible |
@@ -52,7 +54,7 @@ La interfaz permanece funcional mientras se descarga. El índice inicialmente of
 
 ## Extensiones previstas
 
-Agregar backend Q8/llama.cpp, inotify, OCR, miniaturas, perfil por ubicación y filtros de etiquetas múltiples. Integración GNOME SearchProvider2 y menú de Nautilus sobre el mismo motor, evitando bases duplicadas. Resúmenes generativos serían un paso separado, cacheado y explícitamente configurable.
+Agregar backend Q8/llama.cpp, inotify, OCR, perfil por ubicación y filtros de etiquetas múltiples. Integración GNOME SearchProvider2 y menú de Nautilus sobre el mismo motor, evitando bases duplicadas. Resúmenes generativos serían un paso separado, cacheado y explícitamente configurable.
 
 ## Referencias
 
@@ -88,3 +90,19 @@ Los discos muestran un estado derivado de locations.enabled y de sus raíces: ni
 Un recorrido de raíz excluye sububicaciones existentes para mantener una sola pertenencia por archivo. Si se añade una subcarpeta posteriormente, se reasignan los registros coincidentes conservando IDs, vectores, estrellas e historial. La búsqueda de una ubicación padre expande sus sububicaciones. El escaneo usa st_dev para no cruzar otros discos, evita directorios virtuales y considera únicamente archivos regulares.
 
 Los cambios de inclusión detienen la tanda actual, esperan su cierre y arrancan otra revisión; los archivos confirmados ya están persistidos. El selector de carpetas usa Gtk.FileChooserDialog integrado y una referencia persistente, evitando el ciclo del selector Native/portal que estaba dando cancelación. GIO usa el backend local directo para el sistema de archivos, sin depender de montajes GVfs. Se ofrece además entrada por ruta y un botón basado en xdg-user-dir DOWNLOAD.
+
+## Código instalado y preparación de IA
+
+El .deb instala código de solo lectura en `/usr/share/brujula`; el launcher acepta `BRUJULA_APP_ROOT` para un checkout editable. No contiene Torch, pesos ni índice personal. La GUI sigue usando GI del sistema. Preparar IA ejecuta un proceso separado, crea un venv CPU/CUDA y verifica sus dependencias y el SHA-256 de los pesos. Estado y configuración se escriben mediante archivos JSON; cancelar termina el grupo de preparación. No hay descargas en scripts de mantenimiento de dpkg.
+
+Precedencias de `paths.py`:
+
+| Recurso | Orden de selección |
+|---|---|
+| Datos | `BRUJULA_DATA`; si falta, `${XDG_DATA_HOME:-~/.local/share}/brujula` |
+| Modelo | `BRUJULA_MODEL_DIR`; modelo del checkout si tiene config.json; `DATA/models/embeddinggemma-2` |
+| Python del motor | `BRUJULA_ENGINE_PYTHON`; `.venv/bin/python` existente del checkout; `DATA/runtime.json` con ready y ejecutable existente; fallback básico al Python del sistema |
+
+`DATA` se fija al importar el módulo. Definir overrides antes de importar/iniciar procesos. La ausencia de IA no bloquea gestión ni búsqueda literal. El runtime preparado guarda su selección en `runtime.json`; salir y abrir de nuevo permite iniciar el backend con ese Python.
+
+Consultar [contexto y pendientes](CONTINUIDAD.md) y [mantenimiento](MANTENIMIENTO.md) antes de cambiar el empaquetado o esquema.

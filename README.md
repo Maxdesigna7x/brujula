@@ -97,7 +97,7 @@ Para una prueba pequeña, añade la carpeta `examples/` y busca “cómo instala
 
 - Índice, configuración y registros: `~/.local/share/brujula/`.
 - Miniaturas: `~/.local/share/brujula/thumbnails/`.
-- Modelo: `models/embeddinggemma-2/` dentro del proyecto.
+- Modelo: `~/.local/share/brujula/models/embeddinggemma-2/` con el paquete; se reutiliza `models/embeddinggemma-2/` si existe en el checkout.
 - Audio e imágenes de consulta se convierten en archivos temporales; no se añaden automáticamente al índice.
 - La aplicación lee los originales; no los modifica, mueve ni sube.
 - El índice contiene rutas, muestras textuales y embeddings. Trátalo como información personal.
@@ -130,6 +130,10 @@ Se verificaron **24 pruebas** del índice, filtros, discos, consultas multimedia
 
 ## Documentación
 
+- [Guía para agentes](AGENTS.md)
+- [Contexto, decisiones y pendientes](docs/CONTINUIDAD.md)
+- [Desarrollo, pruebas y publicación](docs/MANTENIMIENTO.md)
+- [Instalación y paquete .deb](docs/PAQUETE_DEB.md)
 - [Guía de uso](docs/USO.md)
 - [Arquitectura](docs/ARQUITECTURA.md)
 - [Diagnóstico](docs/SOLUCION_DE_PROBLEMAS.md)

@@ -11,7 +11,7 @@ cd /ruta/a/brujula
 ./run.sh
 ```
 
-La interfaz usa `/usr/bin/python3` y GTK 4/libadwaita del sistema. El motor usa `.venv/bin/python`. El entorno reutiliza PyTorch/CUDA de la instalación existente y mantiene las librerías nuevas dentro de `.venv`.
+La interfaz usa `/usr/bin/python3` y GTK 4/libadwaita del sistema. El motor usa `.venv/bin/python` en el checkout si existe, o el runtime privado preparado por la instalación .deb. Sin runtime preparado, el backend básico usa el Python del sistema. Consulta [instalación .deb](PAQUETE_DEB.md).
 
 **La búsqueda semántica necesita que terminen tanto la descarga como la instalación de dependencias.** La interfaz, los metadatos y la búsqueda por nombre funcionan sin el modelo. El texto se extrae sin modelo cuando están disponibles los extractores.
 
@@ -107,20 +107,20 @@ Si necesitas preparar el entorno:
 .venv/bin/python scripts/check_runtime.py
 ```
 
-No ejecutes dos instaladores o dos descargas del modelo simultáneamente. Los registros de preparación están en `work/dependencies.log` y `work/model-download.log`.
+No ejecutes dos instaladores o dos descargas del modelo simultáneamente. La preparación integrada registra su salida en `~/.local/share/brujula/setup.log`; `setup-state.json` contiene el estado. Los registros de scripts de desarrollo pueden estar en `work/`.
 
 ## Datos y registros
 
 - Índice/configuración: `~/.local/share/brujula/index.sqlite3`.
 - Registro del motor: `~/.local/share/brujula/backend.log`.
-- Modelo: `models/embeddinggemma-2/` dentro del proyecto.
+- Modelo: en el checkout si existe `models/embeddinggemma-2/config.json`; de lo contrario, `~/.local/share/brujula/models/embeddinggemma-2/` (configurable).
 - Muestras de audio/fotogramas: archivos temporales, eliminados al terminar cada archivo.
 - Los archivos originales se leen; no se modifican, mueven ni suben. El índice contiene rutas, muestras de texto y embeddings, por lo que debes tratarlo como datos personales.
 - Abrir un resultado inicia su aplicación predeterminada. Las descargas iniciales contactan Hugging Face; la búsqueda no necesita internet.
 
 ## Atajo de teclado
 
-**Ctrl+Alt+Space** ya está configurado para abrir el panel. El instalador conserva los demás atajos y rechaza conflictos. Reinstalar: `/usr/bin/python3 scripts/install_shortcut.py`. Quitar: añade `--remove`.
+En el equipo original se configuró **Ctrl+Alt+Space** para abrir el panel; un clon o instalación nueva requiere configurar el atajo. El instalador conserva los demás atajos y rechaza conflictos. Reinstalar: `/usr/bin/python3 scripts/install_shortcut.py`. Quitar: añade `--remove`.
 
 Para elegir otra combinación, en Configuración de Zorin → Teclado → Atajos personalizados, edita:
 
@@ -128,7 +128,7 @@ Para elegir otra combinación, en Configuración de Zorin → Teclado → Atajos
 - Comando: `/ruta/a/brujula/run.sh`
 - Combinación sugerida: `Ctrl+Alt+Space` si está libre.
 
-El lanzador ya está instalado. Puedes reinstalarlo con `.venv/bin/python scripts/install_desktop.py`.
+El paquete instala el lanzador global. En desarrollo puedes instalar el lanzador de usuario con `.venv/bin/python scripts/install_desktop.py`.
 
 ## CLI
 
